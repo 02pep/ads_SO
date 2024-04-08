@@ -46,27 +46,32 @@ public class Main {
             ArrayList<Processo> listaDeProntos = new ArrayList<>();
             System.out.println("Tempo\tId do processo\tTempo restante");
             System.out.println("------------------------------------");
-            while (tempo < max_tempo_execucao && nProcessos < processos.size()) {
+            while ((tempo < max_tempo_execucao) && (nProcessos < processos.size())) {
                 for (Processo p : processos) {
-                    if (p.tempo_chegada == tempo) {
+                    if ((p.tempo_chegada <= tempo) && (p.tempo_restante>0)) {
                         listaDeProntos.add(p);
                     }
                 }
                 if (!listaDeProntos.isEmpty()) {
                     Comparator<Processo> comparador = Comparator.comparing(Processo::getTempo_execucao);
                     Processo menorTempoExec = listaDeProntos.stream().min(comparador).get();
-                    System.out.println(tempo + "\t\t" + menorTempoExec.id + "\t\t\t\t" + (menorTempoExec.tempo_restante-1));
-                    tempo++;
-                    menorTempoExec.tempo_restante--;
-                    if (menorTempoExec.tempo_restante == 0) {
-                        listaDeProntos.remove(menorTempoExec);
-                        nProcessos++;
-                    }
-                    for (Processo p : processos) {
-                        if (!menorTempoExec.equals(p) && p.tempo_restante!=0) {
-                            p.tempo_espera++;
+                    while (menorTempoExec.tempo_restante !=0) {
+                        System.out.println(tempo + "\t\t" + menorTempoExec.id + "\t\t\t\t" + (menorTempoExec.tempo_restante - 1));
+                        tempo++;
+                        menorTempoExec.tempo_restante--;
+                        for (Processo p : processos) {
+                            if ((!menorTempoExec.equals(p)) && (p.tempo_restante != 0)) {
+                                p.tempo_espera++;
+                            }
                         }
                     }
+                        listaDeProntos.remove(menorTempoExec);
+                        nProcessos++;
+
+                    } else {
+                    System.out.println("Esperando pela chegada de um processo...");
+                    tempo++;
+                }
                 }
 
             }
@@ -77,7 +82,6 @@ public class Main {
             }
             System.out.println("Tempo médio de espera: " + (double) tempoEspera/ processos.size());
         }
-    }
 
     public static void criarProcesso() {
         Scanner teclado = new Scanner(System.in);
@@ -91,7 +95,7 @@ public class Main {
                 Processo p = new Processo();
                 p.id = processos.size();
                 p.tempo_execucao = random.nextInt(9) + 1;
-                p.tempo_chegada = random.nextInt(9)+1;
+                p.tempo_chegada = random.nextInt(9);
                 processos.add(p);
             }
         } else {
@@ -165,7 +169,7 @@ public class Main {
             System.out.println("------------------------------------");
             while (tempo < max_tempo_execucao && nProcessos < processos.size()) {
                 for (Processo p : processos) {
-                    if (p.tempo_chegada == tempo) {
+                    if ((p.tempo_chegada == tempo) && (p.tempo_restante>0)) {
                         listaDeProntos.add(p);
                     }
                 }
@@ -184,6 +188,9 @@ public class Main {
                             p.tempo_espera++;
                         }
                     }
+                } else {
+                    System.out.println("Esperando pela chegada de um processo...");
+                    tempo++;
                 }
 
             }
