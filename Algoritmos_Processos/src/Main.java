@@ -6,15 +6,16 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner teclado = new Scanner(System.in);
-        Random random = new Random();
         while (true) {
             System.out.println("Selecione uma opção: ");
             System.out.println("1) FCFS");
             System.out.println("2) SJF Não-Preemptivo");
             System.out.println("3) SJF Preemptivo");
-            System.out.println("4) Criar processo(s)");
-            System.out.println("5) Exibir lista de processos");
-            System.out.println("6) Sair do programa");
+            System.out.println("4) Prioridade Não-Preemptivo");
+            System.out.println("5) Prioridade Preemptivo");
+            System.out.println("6) Criar processo(s)");
+            System.out.println("7) Exibir lista de processos");
+            System.out.println("0) Sair do programa");
             int opcao = teclado.nextInt();
             if (opcao == 1) {
                 FCFS();
@@ -23,10 +24,15 @@ public class Main {
             } else if (opcao == 3) {
                 SJFPreemptivo();
             } else if (opcao == 4) {
-                criarProcesso();
+                prioridadeNaoPreemptivo();
             } else if (opcao == 5) {
-                exibirLista();
+                prioridadePreemptivo();
             } else if (opcao == 6){
+                criarProcesso();
+            } else if (opcao == 7) {
+                exibirLista();
+            }
+            else if (opcao == 0) {
                 break;
             }
         }
@@ -37,46 +43,49 @@ public class Main {
         if (processos.isEmpty()) {
             System.out.println("Nenhum processo foi criado!!");
         } else {
-            for (Processo p : processos) {
-                p.tempo_restante = p.tempo_execucao;
-                p.tempo_espera = 0;
-            }
+            limpaTempoEspera();
             int tempo = 0;
             int nProcessos = 0;
             ArrayList<Processo> listaDeProntos = new ArrayList<>();
             System.out.println("Tempo\tId do processo\tTempo restante");
             System.out.println("------------------------------------");
             while ((tempo < max_tempo_execucao) && (nProcessos < processos.size())) {
-                for (Processo p : processos) {
-                    if ((p.tempo_chegada <= tempo) && (p.tempo_restante>0)) {
-                        listaDeProntos.add(p);
+                if (listaDeProntos.isEmpty()) {
+                    for (Processo p : processos) {
+                        if ((p.tempo_chegada <= tempo) && (p.tempo_restante>0)) {
+                            listaDeProntos.add(p);
+                        }
+                    }
+                    if (listaDeProntos.isEmpty()) {
+                        System.out.println("Esperando pela chegada de um processo...");
+                        tempo++;
                     }
                 }
-                if (!listaDeProntos.isEmpty()) {
+                else {
                     Comparator<Processo> comparador = Comparator.comparing(Processo::getTempo_execucao);
                     Processo menorTempoExec = listaDeProntos.stream().min(comparador).get();
                     while (menorTempoExec.tempo_restante !=0) {
                         System.out.println(tempo + "\t\t" + menorTempoExec.id + "\t\t\t\t" + (menorTempoExec.tempo_restante - 1));
                         tempo++;
                         menorTempoExec.tempo_restante--;
-                        for (Processo p : processos) {
-                            if ((!menorTempoExec.equals(p)) && (p.tempo_restante != 0)) {
-                                p.tempo_espera++;
-                            }
+                    }
+                    for (Processo p : processos) {
+                        if ((!menorTempoExec.equals(p)) && (p.tempo_restante > 0)) {
+                            p.tempo_espera = (tempo-p.tempo_chegada);
                         }
                     }
                         listaDeProntos.remove(menorTempoExec);
                         nProcessos++;
 
-                    } else {
-                    System.out.println("Esperando pela chegada de um processo...");
-                    tempo++;
-                }
+                    }
                 }
 
             }
             int tempoEspera = 0;
             for (Processo p : processos) {
+                if (p.tempo_espera<0) {
+                    p.tempo_espera = 0;
+                }
                 tempoEspera+=p.tempo_espera;
                 System.out.println("Tempo de espera do processo [" + p.id + "]: " + p.tempo_espera);
             }
@@ -96,6 +105,7 @@ public class Main {
                 p.id = processos.size();
                 p.tempo_execucao = random.nextInt(9) + 1;
                 p.tempo_chegada = random.nextInt(9);
+                p.prioridade = random.nextInt(9);
                 processos.add(p);
             }
         } else {
@@ -106,6 +116,8 @@ public class Main {
                 p.tempo_execucao = teclado.nextInt();
                 System.out.println("Digite o tempo de chegada para o processo[" + p.id + "]");
                 p.tempo_chegada = teclado.nextInt();
+                System.out.println("Digite a prioridade para o processo[" + p.id + "]");
+                p.prioridade = teclado.nextInt();
                 processos.add(p);
             }
         }
@@ -143,14 +155,15 @@ public class Main {
         limpaTempoEspera();
     }
     public static void limpaTempoEspera() {
-        for (Processo processo : processos) {
-            processo.tempo_espera = 0;
+        for (Processo p : processos) {
+            p.tempo_espera = 0;
+            p.tempo_restante = p.tempo_execucao;
         }
     }
 
     public static void exibirLista() {
         for (Processo processo : processos) {
-            System.out.println("Processo[" + processo.id + "] - Tempo de execução: " + processo.tempo_execucao + " - Tempo de chegada: " + processo.tempo_chegada);
+            System.out.println("Processo[" + processo.id + "] - Tempo de execução: " + processo.tempo_execucao + " - Tempo de chegada: " + processo.tempo_chegada + " - Prioridade: " + processo.prioridade);
         }
     }
 
@@ -158,10 +171,7 @@ public class Main {
         if (processos.isEmpty()) {
             System.out.println("Nenhum processo foi criado!!");
         } else {
-            for (Processo p : processos) {
-                p.tempo_restante = p.tempo_execucao;
-                p.tempo_espera = 0;
-            }
+            limpaTempoEspera();
             int tempo = 0;
             int nProcessos = 0;
             ArrayList<Processo> listaDeProntos = new ArrayList<>();
@@ -183,7 +193,7 @@ public class Main {
                         listaDeProntos.remove(menorTempoExec);
                         nProcessos++;
                     }
-                    for (Processo p : processos) {
+                    for (Processo p : listaDeProntos) {
                         if (!menorTempoExec.equals(p) && p.tempo_restante!=0) {
                             p.tempo_espera++;
                         }
@@ -193,6 +203,102 @@ public class Main {
                     tempo++;
                 }
 
+            }
+            int tempoEspera = 0;
+            for (Processo p : processos) {
+                tempoEspera+=p.tempo_espera;
+                System.out.println("Tempo de espera do processo [" + p.id + "]: " + p.tempo_espera);
+            }
+            System.out.println("Tempo médio de espera: " + (double) tempoEspera/ processos.size());
+        }
+    }
+
+    public static void prioridadeNaoPreemptivo() {
+        if (processos.isEmpty()) {
+            System.out.println("Nenhum processo foi criado!!");
+        } else {
+            limpaTempoEspera();
+            int tempo = 0;
+            int nProcessos = 0;
+            ArrayList<Processo> listaDeProntos = new ArrayList<>();
+            System.out.println("Tempo\tId do processo\tTempo restante");
+            System.out.println("------------------------------------");
+            while ((tempo < max_tempo_execucao) && (nProcessos < processos.size())) {
+                if (listaDeProntos.isEmpty()) {
+                    for (Processo p : processos) {
+                        if ((p.tempo_chegada <= tempo) && (p.tempo_restante > 0)) {
+                            listaDeProntos.add(p);
+                        }
+                    }
+                    if (listaDeProntos.isEmpty()) {
+                        System.out.println("Esperando pela chegada de um processo...");
+                        tempo++;
+                    }
+                } else {
+                    Comparator<Processo> comparador = Comparator.comparing(Processo::getPrioridade);
+                    Processo maiorPrioridade = listaDeProntos.stream().max(comparador).get();
+                    while (maiorPrioridade.tempo_restante !=0) {
+                        System.out.println(tempo + "\t\t" + maiorPrioridade.id + "\t\t\t\t" + (maiorPrioridade.tempo_restante - 1));
+                        tempo++;
+                        maiorPrioridade.tempo_restante--;
+                    }
+                    for (Processo p : processos) {
+                        if ((!maiorPrioridade.equals(p)) && (p.tempo_restante > 0)) {
+                            p.tempo_espera = (tempo-p.tempo_chegada);
+                        }
+                    }
+                    listaDeProntos.remove(maiorPrioridade);
+                    nProcessos++;
+                }
+            }
+            int tempoEspera = 0;
+            for (Processo p : processos) {
+                if (p.tempo_espera<0) {
+                    p.tempo_espera = 0;
+                }
+                tempoEspera+=p.tempo_espera;
+                System.out.println("Tempo de espera do processo [" + p.id + "]: " + p.tempo_espera);
+            }
+            System.out.println("Tempo médio de espera: " + (double) tempoEspera/ processos.size());
+        }
+
+
+    }
+    public static void prioridadePreemptivo() {
+        if (processos.isEmpty()) {
+            System.out.println("Nenhum processo foi criado!!");
+        } else {
+            limpaTempoEspera();
+            int tempo = 0;
+            int nProcessos = 0;
+            ArrayList<Processo> listaDeProntos = new ArrayList<>();
+            System.out.println("Tempo\tId do processo\tTempo restante");
+            System.out.println("------------------------------------");
+            while (tempo < max_tempo_execucao && nProcessos < processos.size()) {
+                for (Processo p : processos) {
+                    if ((p.tempo_chegada == tempo) && (p.tempo_restante > 0)) {
+                        listaDeProntos.add(p);
+                    }
+                } if (!listaDeProntos.isEmpty()) {
+                    Comparator<Processo> comparador = Comparator.comparing(Processo::getPrioridade);
+                    Processo maiorPrioridade = listaDeProntos.stream().max(comparador).get();
+                    System.out.println(tempo + "\t\t" + maiorPrioridade.id + "\t\t\t\t" + (maiorPrioridade.tempo_restante - 1));
+                    tempo++;
+                    maiorPrioridade.tempo_restante--;
+                    if (maiorPrioridade.tempo_restante==0) {
+                        listaDeProntos.remove(maiorPrioridade);
+                        nProcessos++;
+                    }
+                        for (Processo p : listaDeProntos) {
+                            if (!maiorPrioridade.equals(p) && p.tempo_restante > 0) {
+                                p.tempo_espera++;
+                            }
+                        }
+
+                } else {
+                    System.out.println("Esperando pela chegada de um processo...");
+                    tempo++;
+                }
             }
             int tempoEspera = 0;
             for (Processo p : processos) {
