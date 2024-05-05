@@ -13,8 +13,9 @@ public class Main {
             System.out.println("3) SJF Preemptivo");
             System.out.println("4) Prioridade Não-Preemptivo");
             System.out.println("5) Prioridade Preemptivo");
-            System.out.println("6) Criar processo(s)");
-            System.out.println("7) Exibir lista de processos");
+            System.out.println("6) Round Robin");
+            System.out.println("7) Criar processo(s)");
+            System.out.println("8) Exibir lista de processos");
             System.out.println("0) Sair do programa");
             int opcao = teclado.nextInt();
             if (opcao == 1) {
@@ -28,11 +29,12 @@ public class Main {
             } else if (opcao == 5) {
                 prioridadePreemptivo();
             } else if (opcao == 6){
-                criarProcesso();
+                roundRobin();
             } else if (opcao == 7) {
+                criarProcesso();
+            } else if (opcao == 8) {
                 exibirLista();
-            }
-            else if (opcao == 0) {
+            } else if (opcao == 0) {
                 break;
             }
         }
@@ -93,6 +95,7 @@ public class Main {
         }
 
     public static void criarProcesso() {
+        processos.clear();
         Scanner teclado = new Scanner(System.in);
         Random random = new Random();
         System.out.println("Quantos processos quer criar?");
@@ -308,4 +311,50 @@ public class Main {
             System.out.println("Tempo médio de espera: " + (double) tempoEspera/ processos.size());
         }
     }
+
+    public static void roundRobin() {
+        Scanner teclado = new Scanner(System.in);
+        if (processos.isEmpty()) {
+            System.out.println("Nenhum processo foi criado!!");
+        } else {
+            limpaTempoEspera();
+            int tempo = 0;
+            System.out.println("Defina um tempo máximo de execução para cada processo: ");
+            int tMax = teclado.nextInt();
+            ArrayList<Processo> listaDeProntos = new ArrayList<>();
+            for (Processo p : processos) {
+                listaDeProntos.add(p);
+            }
+            System.out.println("Tempo\tId do processo\tTempo restante");
+            System.out.println("------------------------------------");
+            while (!listaDeProntos.isEmpty()) {
+                for (int i = 0; i < listaDeProntos.size(); i++) {
+                    Processo p = listaDeProntos.get(i);
+                    int tempo_processo = 0;
+                    while (tempo_processo < p.tempo_execucao) {
+                        System.out.println(tempo + "\t\t" + p.id + "\t\t\t\t" + (p.tempo_restante-1)); // Correção aqui
+                        tempo++;
+                        tempo_processo++;
+                        p.tempo_restante--;
+                        if (tempo_processo == tMax || p.tempo_restante == 0) {
+                            break;
+                        }
+                    }
+                    if (p.tempo_restante == 0) {
+                        p.tempo_espera = tempo - tempo_processo;
+                        listaDeProntos.remove(p);
+                        i--; // Para ajustar a posição na lista após a remoção do processo
+                    }
+                }
+            }
+            int tempoEspera = 0;
+            for (Processo p : processos) {
+                tempoEspera += p.tempo_espera;
+                System.out.println("Tempo de espera do processo [" + p.id + "]: " + p.tempo_espera);
+            }
+            System.out.println("Tempo médio de espera: " + (double) tempoEspera / processos.size());
+        }
+    }
+
+
 }
