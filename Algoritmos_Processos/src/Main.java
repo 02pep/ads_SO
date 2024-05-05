@@ -332,7 +332,7 @@ public class Main {
                     Processo p = listaDeProntos.get(i);
                     int tempo_processo = 0;
                     while (tempo_processo < p.tempo_execucao) {
-                        System.out.println(tempo + "\t\t" + p.id + "\t\t\t\t" + (p.tempo_restante-1)); // Correção aqui
+                        System.out.println(tempo + "\t\t" + p.id + "\t\t\t\t" + (p.tempo_restante-1));
                         tempo++;
                         tempo_processo++;
                         p.tempo_restante--;
@@ -343,7 +343,7 @@ public class Main {
                     if (p.tempo_restante == 0) {
                         p.tempo_espera = tempo - tempo_processo;
                         listaDeProntos.remove(p);
-                        i--; // Para ajustar a posição na lista após a remoção do processo
+                        i--;
                     }
                 }
             }
